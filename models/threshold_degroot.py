@@ -42,6 +42,24 @@ class DeGrootThresholdModel(DeGrootModel):
         self._update_posting_status()
         
         return opinions
+    
+    def initialize_opinions_manual(self, initial_opinions, proportions):
+        opinions = super().initialize_opinions_manual(initial_opinions, proportions)
+        
+        # initialize posting history
+        self.posting_status = np.zeros(self.n, dtype=bool)
+        self.local_agreements = np.zeros(self.n)
+        
+        # store history
+        self.posting_history = [self.posting_status.copy()]
+        self.local_agreement_history = []
+        self.post_count = np.zeros(self.n, dtype=int)
+        self.positive_posts = np.zeros(self.n, dtype=int)
+        self.negative_posts = np.zeros(self.n, dtype=int)
+        
+        self._update_posting_status()
+        
+        return opinions
         
     def _update_posting_status(self):
         # local agreement for each node
@@ -63,7 +81,7 @@ class DeGrootThresholdModel(DeGrootModel):
         self.post_count += new_posts
         
         # post amount tracking
-        signs = np.sign(self.opinions - np.mean(self.opinions))
+        signs = np.sign(self.opinions)
         positive_posts = (signs > 0) & self.posting_status
         negative_posts = (signs < 0) & self.posting_status
         
@@ -129,7 +147,7 @@ class DeGrootThresholdModel(DeGrootModel):
                     if posts[t, i]:
                         plt.scatter(
                             t, opinions[t, i], 
-                            color='blue' if opinions[t, i] > np.mean(opinions[t]) else 'red',
+                            color='blue' if opinions[t, i] > 0 else 'red',
                             alpha=0.7, zorder=3
                         )
         
@@ -146,10 +164,10 @@ class DeGrootThresholdModel(DeGrootModel):
         for t in range(self.time_steps + 1):
             posting_status = self.posting_history[t]
             opinions = self.opinion_history[t]
-            mean_opinion = np.mean(opinions)
             
-            positive_posts = sum((opinions > mean_opinion) & posting_status)
-            negative_posts = sum((opinions < mean_opinion) & posting_status)
+            sign = np.sign(opinions)
+            positive_posts = sum((sign > 0) & posting_status)
+            negative_posts = sum((sign < 0) & posting_status)
             total_posts = positive_posts + negative_posts
             
             posting_stats.append({

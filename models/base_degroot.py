@@ -34,6 +34,41 @@ class DeGrootModel:
         self.time_steps = 0
         
         return self.opinions
+    
+    def initialize_opinions_manual(self, initial_opinions, proportions):
+        if len(initial_opinions) != len(proportions):
+            raise ValueError(f"opinion and proportion length  must match")
+        if abs(sum(proportions) != 1):
+            raise ValueError(f"proportions must sum to 1")
+        
+        # num nodes per opinion 
+        counts = []
+        remaining = self.n
+        
+        for i in range(len(proportions)):
+            count = int(self.n * proportions[i])
+            counts.append(count)
+            remaining -= count
+        
+        # opinion vector
+        opinions = np.zeros(self.n)
+        
+        # assign opinions to each group
+        start = 0
+        for i, count in enumerate(counts):
+            end = start + count
+            opinions[start:end] = initial_opinions[i]
+            start = end
+        
+        # randomize assignments; not clustered initially
+        np.random.shuffle(opinions)
+
+        # store opinions
+        self.opinions = opinions
+        self.opinion_history = [self.opinions.copy()]
+        self.time_steps = 0
+        
+        return self.opinions
         
     def initialize_opinions(self, initial_opinions=None):
         if initial_opinions is not None:
