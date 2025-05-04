@@ -22,6 +22,7 @@ class DeGrootThresholdModel(DeGrootModel):
         self.initial_neg_opinions = initial_neg_opinions 
         self.initial_neutral_opinions = initial_neutral_opinions
         self.initial_pos_to_neg_ratio = initial_pos_opinions / initial_neg_opinions if initial_neg_opinions > 0 else float('inf')
+        self.initial_proportion_positive = initial_pos_opinions / (initial_pos_opinions + initial_neg_opinions)
 
         # Print the initial distribution statistics
         print(f"Initial opinion distribution:")
@@ -29,6 +30,7 @@ class DeGrootThresholdModel(DeGrootModel):
         print(f"  Negative opinions: {initial_neg_opinions:.2%}")
         print(f"  Neutral opinions: {initial_neutral_opinions:.2%}")
         print(f"  Positive-to-negative ratio: {self.initial_pos_to_neg_ratio:.2f}")
+        print(f"  Initial proportion of opinions on positive side: {self.initial_proportion_positive:.2%}")
         
         # initialize posting history
         self.posting_status = np.zeros(self.n, dtype=bool)
@@ -172,7 +174,7 @@ class DeGrootThresholdModel(DeGrootModel):
         # calculate proportion of positive posts
         positive_proportion = total_positive / total_posts
         negative_proportion = total_negative / total_posts
-        pos_to_neg_ratio = total_positive / total_negative
+        cumulative_pos_to_neg_ratio = total_positive / total_negative
 
         user_post_count = self.post_count.copy()
         user_positive_prop = np.zeros(self.n)
@@ -189,7 +191,7 @@ class DeGrootThresholdModel(DeGrootModel):
             'total_negative': total_negative,
             'positive_proportion': positive_proportion,
             'negative_proportion': negative_proportion,
-            'pos_to_neg_ratio': pos_to_neg_ratio,
+            'cumulative_pos_to_neg_ratio': cumulative_pos_to_neg_ratio,
             'user_post_count': user_post_count,
             'user_positive_proportion': user_positive_prop
         }
@@ -206,6 +208,7 @@ class DeGrootThresholdModel(DeGrootModel):
             positive_posts = sum((opinions > threshold) & posting_status)
             negative_posts = sum((opinions < threshold) & posting_status)
             pos_to_neg_ratio = positive_posts / negative_posts
+            proportion_positive = positive_posts / (positive_posts + negative_posts)
             total_posts = positive_posts + negative_posts
             
             posting_stats.append({
@@ -214,7 +217,8 @@ class DeGrootThresholdModel(DeGrootModel):
                 'negative_posts': negative_posts,
                 'pos_to_neg_ratio': pos_to_neg_ratio,
                 'total_posts': total_posts,
-                'posting_ratio': sum(posting_status) / self.n
+                'posting_ratio': sum(posting_status) / self.n,
+                'proportion_positive': proportion_positive
             })
         
         post_df = pd.DataFrame(posting_stats)

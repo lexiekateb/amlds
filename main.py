@@ -3,6 +3,7 @@ from models import DeGrootThresholdModel
 from utils import add_random_edges, assign_edge_weights
 from utils.graph_utils import create_sbm_graph
 from visualization.plot_utils import plot_network, plot_posting_heatmap
+import numpy as np
 
 def run_experiment(graph, threshold=0.75, steps=100, positive_ratio=0.6, visualize=True):
     # initialization
@@ -30,27 +31,35 @@ def run_experiment(graph, threshold=0.75, steps=100, positive_ratio=0.6, visuali
     post_df, variance_df = model.plot_posting_and_variance(visualize=visualize)
         
     stats = model.get_final_posting_statistics()
-
     print('EXPERIMENT STATS:')
     print(f"Total posts: {stats['total_posts']}")
     print(f"Positive posts: {stats['total_positive']} ({stats['positive_proportion']:.2f})")
     print(f"Negative posts: {stats['total_negative']} ({stats['negative_proportion']:.2f})")
+    cumulative_pos_to_neg_ratio = stats['cumulative_pos_to_neg_ratio']
+    print(f"Overall pos/neg ratio: {cumulative_pos_to_neg_ratio:.2f}")
+    print(f"Overall proportion of positive posts: {stats['total_positive'] / (stats['total_positive'] + stats['total_negative']):.2f}")
     
-    pos_to_neg_ratio = stats['pos_to_neg_ratio']
-    print(f"\nPositive posts ratio: {pos_to_neg_ratio:.2f}")
-    pos_to_neg_ratio_var = post_df['pos_to_neg_ratio'].dropna().var()
-    print(f"Variance in pos/neg ratio over time: {pos_to_neg_ratio_var:.4f}")
+    proportion_positives = post_df['proportion_positive']
+    final_proportion_positive = proportion_positives.iloc[-1]
+    proportion_positive_var = proportion_positives.dropna().var()
+    print(f"Variance in proportion of positive posts over time: {proportion_positive_var:.4f}")
     
     print(f"\nFinal opinion range: {model.compute_polarization_range():.4f}")
     print(f"Final opinion variance: {model.compute_polarization_variance():.4f}")
     print(f"Final opinion std dev: {model.compute_polarization_std():.4f}")
-
     average_local_agreement = model.compute_local_agreement()[0]
     print(f"Final average local agreement: {average_local_agreement:.4f}")
     local_agreement_variance = model.compute_local_agreement()[1]
     print(f"Final local agreement variance: {local_agreement_variance:.4f}")
 
-    return model, pos_to_neg_ratio, pos_to_neg_ratio_var, average_local_agreement
+    # Compute second eigenvalue of normalized adjacency matrix
+    normalized_adj = model.normalized_adj_matrix
+    eigenvalues = np.linalg.eigvals(normalized_adj)
+    sorted_eigenvalues = np.sort(np.abs(eigenvalues))[::-1]
+    second_eigenvalue = sorted_eigenvalues[1]
+    print(f"Second largest eigenvalue: {second_eigenvalue:.4f}")
+
+    return model, cumulative_pos_to_neg_ratio, proportion_positive_var, average_local_agreement, second_eigenvalue
 
 def main():
     # generate a simple sbm graph
