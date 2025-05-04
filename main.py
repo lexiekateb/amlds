@@ -25,9 +25,9 @@ def run_experiment(graph, threshold=0.75, steps=100, positive_ratio=0.6, visuali
     model.run(steps)
     
     if visualize:
-        # stats + plots
         model.plot_opinion_evolution()
-        post_df, variance_df = model.plot_posting_and_variance()
+    
+    post_df, variance_df = model.plot_posting_and_variance(visualize=visualize)
         
     stats = model.get_final_posting_statistics()
 
@@ -44,6 +44,7 @@ def run_experiment(graph, threshold=0.75, steps=100, positive_ratio=0.6, visuali
     print(f"\nFinal opinion range: {model.compute_polarization_range():.4f}")
     print(f"Final opinion variance: {model.compute_polarization_variance():.4f}")
     print(f"Final opinion std dev: {model.compute_polarization_std():.4f}")
+
     average_local_agreement = model.compute_local_agreement()[0]
     print(f"Final average local agreement: {average_local_agreement:.4f}")
     local_agreement_variance = model.compute_local_agreement()[1]

@@ -90,23 +90,9 @@ class DeGrootModel:
     
     def compute_polarization_range(self):
         return np.max(self.opinions) - np.min(self.opinions)
-    
-    def compute_avg_local_agreement(self):
-        signs = np.sign(self.opinions) # - np.mean(self.opinions))
-        local_agreements = []
-        
-        for i in range(self.n):
-            neighbors = list(self.G.neighbors(i))
-            if len(neighbors) == 0:
-                local_agreements.append(0.5)  # if no neighbors
-            else:
-                agreement_count = sum(signs[i] == signs[j] for j in neighbors)
-                local_agreements.append(agreement_count / len(neighbors))
-        
-        return np.mean(local_agreements)
 
     def compute_local_agreement(self):
-        signs = np.sign(self.opinions) # - np.mean(self.opinions))
+        signs = np.sign(self.opinions - np.mean(self.opinions))
         local_agreements = []
         
         for i in range(self.n):
@@ -119,63 +105,3 @@ class DeGrootModel:
         
         local_agreements = np.array(local_agreements)
         return np.mean(local_agreements), np.var(local_agreements)
-    
-    # def plot_opinion_evolution(self):
-    #     opinions = np.array(self.opinion_history)
-        
-    #     plt.figure(figsize=(10, 6))
-    #     for i in range(self.n):
-    #         plt.plot(range(self.time_steps + 1), opinions[:, i], alpha=0.5)
-        
-    #     plt.xlabel('Time Steps')
-    #     plt.ylabel('Opinion')
-    #     plt.title('Evolution of Opinions in DeGroot Model')
-    #     plt.grid(True)
-    #     plt.show()
-    
-    # def plot_polarization_metrics(self):
-    #     variance = []
-    #     std_dev = []
-    #     opinion_range = []
-    #     local_agreement = []
-        
-    #     for t in range(len(self.opinion_history)):
-    #         current_opinions = self.opinions
-
-    #         self.opinions = self.opinion_history[t]
-    #         variance.append(self.compute_polarization_variance())
-    #         std_dev.append(self.compute_polarization_std())
-    #         opinion_range.append(self.compute_polarization_range())
-    #         local_agreement.append(self.compute_local_agreement())
-            
-    #         # restore current opinions
-    #         self.opinions = current_opinions
-
-    #     plt.figure(figsize=(12, 10))        
-    #     plt.subplot(4, 1, 1)
-    #     plt.plot(range(self.time_steps + 1), variance)
-    #     plt.title('Opinion Variance Over Time')
-    #     plt.ylabel('Variance')
-    #     plt.grid(True)
-        
-    #     plt.subplot(4, 1, 2)
-    #     plt.plot(range(self.time_steps + 1), std_dev)
-    #     plt.title('Opinion Standard Deviation Over Time')
-    #     plt.ylabel('Std. Dev.')
-    #     plt.grid(True)
-        
-    #     plt.subplot(4, 1, 3)
-    #     plt.plot(range(self.time_steps + 1), opinion_range)
-    #     plt.title('Opinion Range Over Time')
-    #     plt.ylabel('Range')
-    #     plt.grid(True)
-        
-    #     plt.subplot(4, 1, 4)
-    #     plt.plot(range(self.time_steps + 1), local_agreement)
-    #     plt.title('Average Local Agreement Over Time')
-    #     plt.xlabel('Time Steps')
-    #     plt.ylabel('Local Agreement')
-    #     plt.grid(True)
-        
-    #     plt.tight_layout()
-    #     plt.show()

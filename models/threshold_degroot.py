@@ -114,21 +114,6 @@ class DeGrootThresholdModel(DeGrootModel):
         plt.grid(True)
         plt.show()
     
-
-    def _plot_local_agreement(self, local_agreement_history, threshold):
-        local_agreements = [np.mean(la) for la in local_agreement_history]
-        plt.plot(range(self.time_steps + 1), local_agreements, marker='s')
-        plt.axhline(y=threshold, color='r', linestyle='--', label='Posting Threshold')
-        plt.xlabel('Time Steps')
-        plt.ylabel('Average Local Agreement')
-        plt.title('Average Local Agreement Over Time')
-        plt.legend()
-        plt.grid(True)
-        plt.ylim(min(min(local_agreements), threshold) * 0.9,
-                max(max(local_agreements), threshold) * 1.1)
-        plt.tight_layout()
-        plt.show()
-    
     def _plot_post_counts(self, post_df):
         plt.bar(post_df['time'], post_df['positive_posts'], color='blue', label='Positive Posts', alpha=0.7)
         plt.bar(post_df['time'], post_df['negative_posts'], bottom=post_df['positive_posts'], 
@@ -162,6 +147,21 @@ class DeGrootThresholdModel(DeGrootModel):
         plt.grid(True)
         plt.ylim(0, max(post_df['posting_ratio']) * 1.1)
         plt.show()
+
+
+    def _plot_local_agreement(self, local_agreement_history, threshold):
+        local_agreements = [np.mean(la) for la in local_agreement_history]
+        plt.plot(range(self.time_steps + 1), local_agreements, marker='s')
+        plt.axhline(y=threshold, color='r', linestyle='--', label='Posting Threshold')
+        plt.xlabel('Time Steps')
+        plt.ylabel('Average Local Agreement')
+        plt.title('Average Local Agreement Over Time')
+        plt.legend()
+        plt.grid(True)
+        plt.ylim(min(min(local_agreements), threshold) * 0.9,
+                max(max(local_agreements), threshold) * 1.1)
+        plt.tight_layout()
+        plt.show()
     
     def get_final_posting_statistics(self):
         # get total post counts
@@ -194,7 +194,7 @@ class DeGrootThresholdModel(DeGrootModel):
             'user_positive_proportion': user_positive_prop
         }
 
-    def plot_posting_and_variance(self):
+    def plot_posting_and_variance(self, visualize=False):
         timesteps = range(self.time_steps + 1)
         
         posting_stats = []
@@ -231,18 +231,19 @@ class DeGrootThresholdModel(DeGrootModel):
             })
         
         variance_df = pd.DataFrame(variance_metrics)
-            
-        # Plot 1: Post counts over time
-        self._plot_post_counts(post_df)
+        
+        if visualize:
+            # Plot 1: Post counts over time
+            self._plot_post_counts(post_df)
 
-        # Plot 2: Cumulative posts over time
-        self._plot_cumulative_posts(post_df)
+            # Plot 2: Cumulative posts over time
+            self._plot_cumulative_posts(post_df)
 
-        # Plot 3: Posting ratio over time
-        self._plot_posting_ratio(post_df)
+            # Plot 3: Posting ratio over time
+            self._plot_posting_ratio(post_df)
 
-        # Plot 4: Average local agreement over time
-        self._plot_local_agreement(self.local_agreement_history, self.threshold)
+            # Plot 4: Average local agreement over time
+            self._plot_local_agreement(self.local_agreement_history, self.threshold)
         
         return post_df, variance_df
 
