@@ -64,20 +64,22 @@ def run_experiment(graph, threshold=0.75, steps=100, positive_ratio=0.6, visuali
 def main():
     # generate a simple sbm graph
     G = create_sbm_graph(
-        sizes=[100, 200, 400, 150, 300],  # sizes of communities
-        p_intra=0.7,                    # probability within communities
-        p_inter=0.1                     # probability between communities
+        sizes=[25, 25, 25, 25],  # sizes of communities
+        p_intra=0.5,                    # probability within communities
+        p_inter=0.01                     # probability between communities
     )
     
     # add random edge weights to make the graph more realistic to TikTok Randomness
+
     num_edges = int(G.number_of_edges() * 0.1)  # 10% extra random edges
+
     add_random_edges(G, num_edges)
     assign_edge_weights(G, method='engagement', seed=42)
     
     model = run_experiment(
         graph=G,
         threshold=0.75,
-        steps=100,
+        steps=50,
         positive_ratio=0.6
     )
     

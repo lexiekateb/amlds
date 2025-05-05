@@ -46,7 +46,7 @@ class DeGrootThresholdModel(DeGrootModel):
         self._update_posting_status()
         
         return opinions
-
+      
     def _update_posting_status(self):
         # Compute local agreement for each node based on the paper
         signs = np.sign(self.opinions - np.mean(self.opinions))
@@ -65,10 +65,11 @@ class DeGrootThresholdModel(DeGrootModel):
         self.local_agreements = local_agreements
         new_posts = self.posting_status.astype(int)
         self.post_count += new_posts
-        
+       
         # count positive posts for time step
         signs = np.sign(self.opinions)
         positive_posts = (signs > 0) & self.posting_status # people on the positive side of the opinion who are supposed to post 
+
         negative_posts = (signs < 0) & self.posting_status
         self.positive_posts += positive_posts.astype(int)
         self.negative_posts += negative_posts.astype(int)
@@ -196,7 +197,9 @@ class DeGrootThresholdModel(DeGrootModel):
             'user_positive_proportion': user_positive_prop
         }
 
+
     def plot_posting_and_variance(self, visualize=False):
+
         timesteps = range(self.time_steps + 1)
         
         posting_stats = []
@@ -209,6 +212,7 @@ class DeGrootThresholdModel(DeGrootModel):
             negative_posts = sum((opinions < threshold) & posting_status)
             pos_to_neg_ratio = positive_posts / negative_posts
             proportion_positive = positive_posts / (positive_posts + negative_posts)
+
             total_posts = positive_posts + negative_posts
             
             posting_stats.append({
