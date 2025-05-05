@@ -1,6 +1,8 @@
 import numpy as np
 import networkx as nx
 import random
+import sklearn
+from sklearn.cluster import KMeans
 
 def add_random_edges(G, n_random):
     nodes = list(G.nodes())
@@ -26,8 +28,7 @@ def assign_edge_weights(G, method='uniform', seed=42):
             raw = (v_u + v_v) / 20000.0
             G[u][v]['weight'] = max(raw, 0.01) # avoid insanely small weights
 
-def create_sbm_graph(sizes, p_intra, p_inter, seed=42):
-
+def create_sbm_graph(sizes, p_intra, p_inter, seed=42, remove_self_loops=True):
     n_communities = len(sizes)
     p = [[p_inter for _ in range(n_communities)] for _ in range(n_communities)]
     
@@ -37,6 +38,17 @@ def create_sbm_graph(sizes, p_intra, p_inter, seed=42):
 
     G = nx.stochastic_block_model(sizes, p, seed=seed)
     G.remove_nodes_from(list(nx.isolates(G)))
+    if remove_self_loops:
+        G.remove_edges_from(nx.selfloop_edges(G))
+    G = nx.convert_node_labels_to_integers(G)
+    
+    return G
+
+def create_random_geometric_graph(n, radius, dim=2, seed=42, remove_self_loops=True):
+    G = nx.random_geometric_graph(n, radius, dim=dim, seed=seed)
+    G.remove_nodes_from(list(nx.isolates(G)))
+    if remove_self_loops:
+        G.remove_edges_from(nx.selfloop_edges(G))
     G = nx.convert_node_labels_to_integers(G)
     
     return G
