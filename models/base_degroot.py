@@ -35,10 +35,10 @@ class DeGrootModel:
         
         return self.opinions
         
-    def initialize_opinions_manual(self, initial_opinions, proportions):
+    def initialize_opinions_manual(self, initial_opinions, proportions, SBM_bias_blocks=None):
         if len(initial_opinions) != len(proportions):
-            raise ValueError(f"opinion and proportion length  must match")
-        if abs(sum(proportions) != 1):
+            raise ValueError(f"opinion and proportion length must match")
+        if abs(sum(proportions) - 1) > 1e-10:
             raise ValueError(f"proportions must sum to 1")
         
         # num nodes per opinion 
@@ -53,15 +53,50 @@ class DeGrootModel:
         # opinion vector
         opinions = np.zeros(self.n)
         
-        # assign opinions to each group
-        start = 0
-        for i, count in enumerate(counts):
-            end = start + count
-            opinions[start:end] = initial_opinions[i]
-            start = end
-        
-        # randomize assignments; not clustered initially
-        np.random.shuffle(opinions)
+        if SBM_bias_blocks is not None:
+            # Get community assignments from the graph
+            communities = nx.community.greedy_modularity_communities(self.G)
+            n_blocks = len(communities)
+            
+            if n_blocks != 5:
+                raise ValueError(f"Expected 5 communities from SBM, got {n_blocks}")
+            
+            if SBM_bias_blocks.shape != (5, len(proportions)):
+                raise ValueError(f"SBM_bias_blocks must have shape (5, {len(proportions)})")
+            
+            # For each community, assign opinions based on the bias blocks
+            for block_idx, community in enumerate(communities):
+                block_size = len(community)
+                block_nodes = list(community)
+                
+                # Calculate opinion distribution for this block
+                block_opinions = []
+                for i, count in enumerate(counts):
+                    # Use the bias block to determine how many of each opinion
+                    biased_count = int(count * SBM_bias_blocks[block_idx, i])
+                    block_opinions.extend([initial_opinions[i]] * biased_count)
+                
+                # Pad or trim to match block size
+                if len(block_opinions) < block_size:
+                    # Pad with neutral opinion
+                    block_opinions.extend([0] * (block_size - len(block_opinions)))
+                elif len(block_opinions) > block_size:
+                    # Trim excess opinions
+                    block_opinions = block_opinions[:block_size]
+                
+                # Assign opinions to nodes in this block
+                for node, opinion in zip(block_nodes, block_opinions):
+                    opinions[node] = opinion
+        else:
+            # Original random assignment logic
+            start = 0
+            for i, count in enumerate(counts):
+                end = start + count
+                opinions[start:end] = initial_opinions[i]
+                start = end
+            
+            # randomize assignments; not clustered initially
+            np.random.shuffle(opinions)
 
         # store opinions
         self.opinions = opinions

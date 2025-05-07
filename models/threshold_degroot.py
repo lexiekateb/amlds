@@ -9,8 +9,8 @@ class DeGrootThresholdModel(DeGrootModel):
         super().__init__(graph)
         self.threshold = local_agreement_threshold
     
-    def initialize_opinions_manual(self, initial_opinions, proportions):
-        opinions = super().initialize_opinions_manual(initial_opinions, proportions)
+    def initialize_opinions_manual(self, initial_opinions, proportions, SBM_bias_blocks=None):
+        opinions = super().initialize_opinions_manual(initial_opinions, proportions, SBM_bias_blocks)
 
         # Calculate initial opinion distribution statistics
         initial_pos_opinions = sum(proportions[i] for i in range(len(proportions)) if initial_opinions[i] > 0)

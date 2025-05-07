@@ -77,3 +77,13 @@ def create_influencer_graph(n_nodes=1000, bucket_counts=None, bucket_edges=None,
             G.add_edge(node, target)
 
     return G
+
+
+def create_random_geometric_graph(n, radius, dim=2, seed=42, remove_self_loops=True):
+    G = nx.random_geometric_graph(n, radius, dim=dim, seed=seed)
+    G.remove_nodes_from(list(nx.isolates(G)))
+    if remove_self_loops:
+        G.remove_edges_from(nx.selfloop_edges(G))
+    G = nx.convert_node_labels_to_integers(G)
+    
+    return G
