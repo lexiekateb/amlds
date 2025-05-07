@@ -41,42 +41,39 @@ def create_sbm_graph(sizes, p_intra, p_inter, seed=42):
     
     return G
 
-def create_influencer_graph(n_nodes=1000, view_buckets=None, bucket_counts=None, 
-                          bucket_edges=None, seed=42):
-    
+def create_influencer_graph(n_nodes=1000, bucket_counts=None, bucket_edges=None, seed=42):
     random.seed(seed)
     np.random.seed(seed)
 
-    if len(bucket_edges) != len(view_buckets):
-        raise ValueError(f"bucket_edges must have the same length as view_buckets: got {len(bucket_edges)} and {len(view_buckets)}")   
+    num_buckets = len(bucket_counts)
+
+    if len(bucket_edges) != num_buckets:
+        raise ValueError(f"bucket_edges must have the same length as bucket_counts: got {len(bucket_edges)} and {num_buckets}")   
     
     if sum(bucket_counts) != n_nodes:
         raise ValueError(f"bucket_counts must sum to n_nodes: got {sum(bucket_counts)} and {n_nodes}")
 
     G = nx.Graph()
     node_id = 0
-    
-    for bucket_idx, (bucket, count, edge_count) in enumerate(zip(view_buckets, bucket_counts, bucket_edges)):
-        # Normalized influence level (0 to 1), higher index means lower influence
-        # Reverse the index to make higher influence for lower bucket_idx
-        influence_level = 1 - (bucket_idx / (len(view_buckets) - 1))
+
+    for bucket_idx, (count, edge_count) in enumerate(zip(bucket_counts, bucket_edges)):
+        
+        influence_level = 1 - (bucket_idx / (num_buckets - 1))
         
         for _ in range(count):
             G.add_node(node_id, 
-                      bucket=bucket, 
-                      influence=influence_level,
-                      target_edges=edge_count)
-            
+                       bucket_index=bucket_idx, 
+                       influence=influence_level,
+                       target_edges=edge_count)
             node_id += 1
-    
+
     for node in G.nodes():
         edge_count = G.nodes[node]['target_edges']
         potential_connections = list(set(G.nodes()) - {node} - set(G.neighbors(node)))
         edge_count = min(edge_count, len(potential_connections))
         
-        # Add random edges
         connections = random.sample(potential_connections, edge_count)
         for target in connections:
             G.add_edge(node, target)
-    
+
     return G
