@@ -283,7 +283,7 @@ class DeGrootThresholdModel(DeGrootModel):
         nx.draw_networkx(
             self.G, pos, 
             node_color=colors,
-            node_size=50,
+            node_size=10,
             with_labels=False,
             edge_color='gray',
             alpha=0.7
