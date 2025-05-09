@@ -5,21 +5,79 @@ from utils.graph_utils import create_sbm_graph
 from visualization.plot_utils import plot_network, plot_posting_heatmap
 import numpy as np
 
-def run_experiment(graph, threshold=0.75, steps=100, positive_ratio=0.6, visualize=True):
-    # initialization
-    model = DeGrootThresholdModel(graph, local_agreement_threshold=threshold)
+def cyclic_variations(base_vector, delta=0.05, n_variations=None, tol=1e-8):
+    """
+    Generate structured variations of a probability vector by applying cyclic ±delta shifts.
 
+    Parameters
+    ----------
+    base_vector : array-like
+        A probability vector that sums to 1.
+    delta : float
+        Amount to perturb each row by (adds to one index, subtracts from another).
+    n_variations : int, optional
+        Number of variations to return. If None, defaults to len(base_vector).
+        If greater than len(base_vector), wraps around cyclically.
+    tol : float
+        Tolerance for sum check and non-negativity.
+
+    Returns
+    -------
+    variations : np.ndarray
+        Array of shape (n_variations, len(base_vector)) of perturbed probability vectors.
+    """
+    base = np.array(base_vector, dtype=float)
+    d = len(base)
+
+    if not np.allclose(base.sum(), 1.0, atol=tol):
+        raise ValueError("Base vector must sum to 1.")
+
+    if n_variations is None:
+        n_variations = d
+
+    variations = np.zeros((n_variations, d))
+
+    for i in range(n_variations):
+        v = base.copy()
+        a = i % d
+        b = (i + 1) % d
+        v[a] += delta
+        v[b] -= delta
+
+        if np.any(v < -tol):  # allow slight negative due to round-off, but not beyond tol
+            raise ValueError(f"Delta={delta} is too large at variation {i} (produced negative entry).")
+
+        # Ensure it's clipped to [0, 1] and renormalized if necessary
+        v = np.clip(v, 0, 1)
+        v /= v.sum()  # rescale to sum to 1
+        variations[i] = v
+
+    return variations
+
+def run_experiment(graph, threshold=0.75, steps=100, positive_ratio=0.6, visualize=True, delta=None):
+    
     # initial opinions and belief distribution
     ispal_op = [-1, -.5, 0, .5, 1]
     ispal_prop = [.1, .2, .29, .22, .19] # target 90/10
     abortion_op = [0.9, 0.3, -0.3, -0.9]
     abortion_prop = [0.31, 0.34, 0.27, 0.08] # 95/5
-
-    model.initialize_opinions_manual(
+    
+    if delta is not None:
+        SBM_bias_blocks = cyclic_variations(ispal_prop, delta=delta)
+        model = DeGrootThresholdModel(graph, local_agreement_threshold=threshold)
+        model.initialize_opinions_manual(
+            initial_opinions=ispal_op,
+            proportions=ispal_prop,
+            SBM_bias_blocks=SBM_bias_blocks
+        )
+    else:
+        model = DeGrootThresholdModel(graph, local_agreement_threshold=threshold)
+        model.initialize_opinions_manual(
         initial_opinions=ispal_op,
         proportions=ispal_prop
     )
-    
+
+
     if visualize:
         model.visualize_distribution(layout='spring', timestep=0)
     

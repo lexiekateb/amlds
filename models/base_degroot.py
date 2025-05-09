@@ -55,7 +55,15 @@ class DeGrootModel:
         
         if SBM_bias_blocks is not None:
             # Get community assignments from the graph
-            communities = nx.community.greedy_modularity_communities(self.G)
+            # Get node-to-community mapping from graph
+            communities = list(nx.community.greedy_modularity_communities(self.G))
+            # Create communities based on node ordering
+            communities = []
+            start_idx = 0
+            for size in [200, 200, 200, 200, 200]:  # 5 equal-sized communities
+                community = set(range(start_idx, start_idx + size))
+                communities.append(community)
+                start_idx += size
             n_blocks = len(communities)
             
             if n_blocks != 5:
