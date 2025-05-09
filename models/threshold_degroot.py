@@ -251,7 +251,7 @@ class DeGrootThresholdModel(DeGrootModel):
         
         return post_df, variance_df
 
-    def visualize_distribution(self, layout='spring', timestep=0):
+    def visualize_distribution(self, layout='spring', timestep=0, title='Initial Opinion Distribution'):
         initial_opinions = self.opinion_history[timestep]
         
         plt.figure(figsize=(10, 6))
@@ -262,7 +262,7 @@ class DeGrootThresholdModel(DeGrootModel):
         plt.axvline(x=np.mean(initial_opinions), color='red', linestyle='--', label='Mean')
         plt.xlabel('Opinion Value')
         plt.ylabel('Count')
-        plt.title('Distribution of Initial Opinions')
+        plt.title(title)
         plt.legend()
         
         # Network visualization with opinions
@@ -294,3 +294,4 @@ class DeGrootThresholdModel(DeGrootModel):
         
         plt.tight_layout()
         plt.show()
+        

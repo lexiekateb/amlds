@@ -2,8 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
 import seaborn as sns
+from networkx.algorithms.community import greedy_modularity_communities
 
-def plot_network(G, opinions, pos=None, node_size=50, with_labels=False, title=None):
+
+def plot_network(G, opinions, pos=None, node_size=10, with_labels=False, title=None):
     if pos is None:
         pos = nx.spring_layout(G, seed=42)
     
@@ -19,7 +21,7 @@ def plot_network(G, opinions, pos=None, node_size=50, with_labels=False, title=N
             node_colors.append((intensity, 0, 0))
     
     # Create plot
-    fig, ax = plt.subplots(figsize=(10, 8))
+    fig, ax = plt.subplots(figsize=(4, 3))
     
     # Draw network
     nx.draw_networkx(
@@ -92,3 +94,41 @@ def plot_posting_heatmap(model, time_steps=None):
     plt.tight_layout()
     
     return fig, ax
+
+def plot_sbm_network(G, opinions=None, node_size=20, title=None, figsize=(4, 3)):
+    # 1. Detect communities (greedy modularity)
+    communities = list(greedy_modularity_communities(G))
+    
+    # 2. Layout: assign spring layout *within* each community, then position them in a circle
+    pos = {}
+    radius = 3
+    for i, com in enumerate(communities):
+        angle = 2 * np.pi * i / len(communities)
+        center = np.array([np.cos(angle), np.sin(angle)]) * radius
+        subG = G.subgraph(com)
+        sub_pos = nx.spring_layout(subG, seed=42)  # local spring layout
+        for node, coords in sub_pos.items():
+            pos[node] = center + coords  # shift community to cluster position
+
+    # 3. Node color logic
+    if opinions is not None:
+        colors = ['blue' if op > 0 else 'red' for op in opinions]
+    else:
+        colors = ['red'] * G.number_of_nodes()
+
+    # 4. Plot
+    plt.figure(figsize=figsize)
+    nx.draw_networkx(
+        G, pos,
+        node_color=colors,
+        node_size=node_size,
+        edge_color='lightgray',
+        with_labels=False,
+        alpha=0.8
+    )
+
+    if title:
+        plt.title(title)
+    plt.axis('off')
+    plt.tight_layout()
+    plt.show()
